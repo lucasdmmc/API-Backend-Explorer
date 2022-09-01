@@ -1,15 +1,63 @@
+const { hash } = require("bcryptjs")
 const AppError = require("../utils/appError.js")
+const sqliteConnection = require("../database/sqlite")
+
 
 class userController {
-  create(request, response) {
+  async create(request, response) {
     const {name, email, password} = request.body;
 
-    if(!name) {
-      throw new AppError("Nome do usuário é obrigatório!!")
+    const database = await sqliteConnection();
+
+    const checkUserExists = await database.get("SELECT * FROM users WHERE email = (?)", [email])
+    console.log(checkUserExists)
+ 
+    if(checkUserExists){
+        throw new AppError("E-mail in use!");
     }
 
-    response.status(201).json({ name, email, password})
+    const hashedPassword = await hash(password, 8)
+
+    await database.run(
+      "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+      [name, email, hashedPassword]
+      )
+    
+    return response.status(201).json()
   }
+
+  async update(request, response) {
+    const {name, email} = request.body;
+    const {id} = request.params;
+
+    const database = await sqliteConnection()
+    const user = await database.get("SELECT * FROM users WHERE id = (?)", [id])
+
+    if(!user) {
+      throw new AppError("User not found!")
+    }
+
+    const userWithUpdateEmail = await database.get("SELECT * FROM users WHERE email = (?)", [email])
+
+    if(userWithUpdateEmail && userWithUpdateEmail.id !== user.id) {
+      throw new AppError("E-mail already registred!")
+    }
+
+    user.name = name;
+    user.email = email;
+
+    await database.run(`
+    UPDATE users SET
+    name = ?,
+    email = ?,
+    updated_at = ?
+    WHERE id = ?`, 
+    [user.name, user.email, new Date(), id])
+
+
+    return response.json()
+  }
+
 }
 
 module.exports = userController

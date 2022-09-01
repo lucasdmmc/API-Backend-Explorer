@@ -5,5 +5,7 @@ const UserController = require("../controllers/userController.js")
 const userController = new UserController()
  
 usersRouter.post("/", userController.create)
+usersRouter.put("/:id", userController.update)
+
 
 module.exports = usersRouter
