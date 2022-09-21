@@ -13,7 +13,7 @@ class UserController {
     console.log(checkUserExists)
  
     if(checkUserExists){
-        throw new AppError("E-mail in use!");
+      throw new AppError("Esse e-mail já está em uso!");
     }
 
     const hashedPassword = await hash(password, 8)
