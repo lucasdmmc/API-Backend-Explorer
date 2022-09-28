@@ -79,7 +79,7 @@ class NotesController {
         .orderBy("notes.title")
     }else {
       notes = await knex("notes")
-        .where({ user_id, title })
+        .where({ user_id })
         .whereLike("title", `%${title}%`)
         .orderBy("title");
     }
